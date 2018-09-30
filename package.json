@@ -12,6 +12,7 @@
 	"author": "Nhat Khanh <lednhatkhanh@gmail.com>",
 	"license": "MIT",
 	"dependencies": {
+		"date-fns": "^1.29.0",
 		"isomorphic-unfetch": "^3.0.0",
 		"next": "^7.0.0",
 		"prop-types": "^15.6.2",

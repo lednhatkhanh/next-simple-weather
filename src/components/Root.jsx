@@ -1,12 +1,10 @@
 import PropTypes from "prop-types";
 
-export const Root = ({ children, backgroundParams }) => (
+export const Root = ({ children }) => (
 	<div>
 		{children}
 		<style jsx>{`
-			background: url(https://source.unsplash.com/1600x900/?${backgroundParams});
-			background-size: cover;
-			background-repeat: no-repeat;
+			background-color: #f4f4f4;
 			min-height: 100vh;
 			display: grid;
 			align-content: center;
@@ -17,10 +15,8 @@ export const Root = ({ children, backgroundParams }) => (
 
 Root.propTypes = {
 	children: PropTypes.node,
-	backgroundParams: PropTypes.string,
 };
 
 Root.defaultProps = {
 	children: null,
-	backgroundParams: "rain",
 };
