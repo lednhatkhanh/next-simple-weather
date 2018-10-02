@@ -21,6 +21,8 @@ export default class IndexPage extends React.PureComponent {
 	};
 
 	componentDidMount() {
+		this.controller = new AbortController();
+
 		this.getWeatherData();
 		if (navigator && navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(
@@ -44,6 +46,10 @@ export default class IndexPage extends React.PureComponent {
 				},
 			);
 		}
+	}
+
+	componentWillUnmount() {
+		this.controller.abort();
 	}
 
 	render() {
@@ -176,22 +182,29 @@ export default class IndexPage extends React.PureComponent {
 		const { lat, lon } = this.state;
 		const { OPEN_WEATHER_API_KEY } = process.env;
 		if (OPEN_WEATHER_API_KEY) {
-			const result = await fetch(
-				`http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPEN_WEATHER_API_KEY}`,
-			);
-			const data = await result.json();
-			const {
-				sys: { country },
-				main: { temp },
-			} = data;
-			const city = data.name;
-			const weather = data.weather[0].main;
-			this.setState({
-				city,
-				country,
-				temp,
-				weather,
-			});
+			try {
+				const result = await fetch(
+					`http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPEN_WEATHER_API_KEY}`,
+					{
+						signal: this.controller.signal,
+					},
+				);
+				const data = await result.json();
+				const {
+					sys: { country },
+					main: { temp },
+				} = data;
+				const city = data.name;
+				const weather = data.weather[0].main;
+				this.setState({
+					city,
+					country,
+					temp,
+					weather,
+				});
+			} catch (error) {
+				// Do nothing
+			}
 		}
 	};
 
@@ -199,44 +212,40 @@ export default class IndexPage extends React.PureComponent {
 		const { lat, lon } = this.state;
 		const { OPEN_WEATHER_API_KEY } = process.env;
 		if (OPEN_WEATHER_API_KEY) {
-			const result = await fetch(
-				`http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OPEN_WEATHER_API_KEY}`,
-			);
-			const data = await result.json();
-			const { list } = data;
+			try {
+				const result = await fetch(
+					`http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${OPEN_WEATHER_API_KEY}`,
+					{
+						signal: this.controller.signal,
+					},
+				);
+				const data = await result.json();
+				const { list } = data;
 
-			const today = parse(new Date());
-			let i = 0;
-			this.setState(
-				{
-					forecast: [],
-				},
-				() => {
-					while (isSameDay(parse(list[i].dt_txt), today)) {
-						const weatherData = list[i];
-						const date = getTime(list[i].dt_txt);
-						const { temp } = weatherData.main;
-						const weather = weatherData.weather[0].main;
-						const icon = weatherData.weather[0].icon;
-						this.setState(({ forecast }) => ({
-							forecast: [
-								...forecast,
-								{
-									id: date,
-									date,
-									temp,
-									weather,
-									icon,
-								},
-							],
-						}));
-						if (i >= 5) {
-							return;
-						}
-						i++;
-					}
-				},
-			);
+				const today = parse(new Date());
+				let i = 0;
+				const forecast = [];
+				while (isSameDay(parse(list[i].dt_txt), today) && i < 5) {
+					const weatherData = list[i];
+					const date = getTime(list[i].dt_txt);
+					const { temp } = weatherData.main;
+					const weather = weatherData.weather[0].main;
+					const icon = weatherData.weather[0].icon;
+					forecast.push({
+						id: date,
+						date,
+						temp,
+						weather,
+						icon,
+					});
+					i++;
+				}
+				this.setState({
+					forecast,
+				});
+			} catch (error) {
+				// Do nothing
+			}
 		}
 	};
 }
